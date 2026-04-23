@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Гайд | Установка CrowdStrike Falcon через Group Policy Objects</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Пошаговый гайд по кибербезопасности и практическим кейсам">
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+	<div class="header-container">
+    <img src="images/logo.png" alt="Cyber Security Blog Logo" class="logo">
+    <h1>Furnicutza Cyber Security Blog</h1>
+    </div>
+	<nav>
+        <a href="index.html">ГЛАВНАЯ</a>
+        <a href="news.html">НОВОСТИ</a>
+        <a href="guides.html">ГАЙДЫ</a>
+        <a href="poc.html">PoC</a>
+        <a href="about.html">КОНТАКТЫ</a>
+    </nav>
+</header>
+
+<main>
+
+    <!-- Основной контент статьи -->
+    <article>
+        <h1>Установка CrowdStrike Falcon через Group Policy Objects</h1>
+        <div class="meta">Опубликовано: 23 февраля 2026 • Категория: Гайды</div>
+	    <h2>Введение</h2>
+        <p>Развертывание сенсора CrowdStrike Falcon с помощью групповой политики (GPO) позволяет администраторам устанавливать сенсор на нескольких конечных точках Windows без ручного вмешательства. Этот метод идеально подходит для организаций, использующих Active Directory (AD) для централизованного управления устройствами.</p>
+		<h2>Дано:</h2>
+		<p>В настоящей инструкции  установка сенсора будет назначена группе хостов <b>Falcon Workstations</b>  в которой участвует тестовый хост <b>win11gpo</b>, являющийся участником домена edusiem.lab. </p> 
+        <img src="images/csgpo/001.png"    alt="Deploy Falcon sensor GPO"  loading="lazy">
+		<h2>Технические требования</h2>
+		<p>Перед настройкой интеграции убедитесь, что у вас есть:<br>
+		📌	Контроллер домена Active Directory (AD) с управлением групповыми политиками.<br>
+		📌	Установщик сенсора CrowdStrike Falcon (<b>FalconSensor_Windows.exe</b>).<br>	
+		📌	Идентификатор клиента (<b>CID</b>) из консоли CrowdStrike Falcon.<br>
+		📌	Права администратора на контроллере домена.<br>
+		</p>
+		<h2>Процесс установки и настройки</h2>
+        <p>1.	Войдите в консоль Falcon.<br>
+		Перейдите в раздел <b>Host Setup and Management ->Sensor Downloads</b>. Перейдите на страницу загрузки сенсоров. Загрузите сенсор для ОС Windows.<br>
+		Выберите версию Windows и загрузите файл <b>FalconSensor_Windows.exe</b>.<br>
+		Разместите установщик в сетевом ресурсе. <br>
+		Скопируйте <b>FalconSensor_Windows.exe</b>, доступный всем компьютерам.<br>
+		В примере: <b>\\DC17\Falcon\ FalconSensor_Windows.exe</b><br>
+		📌 Примечание. Убедитесь, что ресурс имеет разрешения на чтение (read) и выполнение (execute) для всех компьютеров, подключенных к домену.
+		</p>
+		<p>2.	Создание объектов групповой политики GPO. Откройте <b>Управление групповыми политиками (Group Policy Management)</b>. Нажмите <b>Win + R</b>, введите <b>gpmc.msc</b> и нажмите Enter. Создайте новый объект групповой политики (GPO).<br>
+		Щелкните правой кнопкой мыши <b>Объекты групповой политики (Group Policy Objects)</b> и выберите <b>Создать (New)</b>.<br>
+		Назовите GPO <b>Deploy CrowdStrike Falcon</b>.<br>
+		</p>
+		<img src="images/csgpo/002.png"    alt="Deploy Falcon sensor GPO"  loading="lazy">
+		<p>Измените GPO<br>
+		Щелкните правой кнопкой мыши новый GPO и выберите  <b>Изменить (Edit)</b>.</p>
+		<img src="images/csgpo/003.png"    alt="Deploy Falcon sensor GPO"  loading="lazy">
+		<p>Перейдите в раздел <b>Конфигурация компьютера-> Политики-> Параметры Windows->Сценарии (запуск/завершение работы) (Computer Configuration -> Policies->Windows Settings->Scripts (Startup/Shutdown)</b>).</p>
+        <img src="images/csgpo/004.png"    alt="Deploy Falcon sensor GPO"  loading="lazy">
+		<p>Дважды щелкните <b>Запуск (Startup)</b> и нажмите <b>Добавить (Add)</b>.<br>
+		Добавьте сценарий запуска</p>
+		<img src="images/csgpo/005.png"    alt="Deploy Falcon sensor GPO"  loading="lazy">
+		<p>Нажмите <b>Обзор (Browse)</b>, перейдите в папку <b>\\DC17\Falcon</b> и создайте новый файл сценария:</br>
+		Имя файла: <b>InstallFalcon.bat</b></p>
+		<img src="images/csgpo/006.png"    alt="Deploy Falcon sensor GPO"  loading="lazy">
+        <p>Содержимое файла <b>InstallFalcon.bat</b> (замените <i>YOUR-CUSTOMER-ID</i> фактическим CID из вашей консоли Falcon):</p>
+        <pre>
+@echo off 
+
+echo [%date% %time%] Install.bat started >> C:\GPO_Install_Log.txt
+\\DC17\Falcon\FalconSensor_Windows.exe /quiet /norestart CID= YOUR-CUSTOMER-ID
+echo [%date% %time%] Install.bat finished >> C:\GPO_Install_Log.txt
+
+        </pre>
+		<p>Сохраните и закройте окно скрипта. Нажмите <b>ОК</b>, чтобы применить скрипт запуска.</p>
+		<p>3.	Применить GPO к целевым компьютерам. В разделе <b>Управление групповыми политиками Group Policy Management</b> щелкните правой кнопкой мыши подразделение (OU), содержащее компьютеры, на которых необходимо установить сенсор Falcon. В настоящей инструкции OU называется <b>Falcon Workstations</b>.</p>
+		<p>4.	Щелкните <b>Связать существующий объект групповой политики (Link an Existing GPO)</b></p>
+		<img src="images/csgpo/007.png"    alt="Deploy Falcon sensor GPO"  loading="lazy">
+		<p>и выберите <b>Deploy CrowdStrike Falcon.</b></p>
+		<img src="images/csgpo/008.png"    alt="Deploy Falcon sensor GPO"  loading="lazy">
+		<p>Принудительное обновление групповой политики на клиентах<br>
+		Откройте командную строку от имени администратора на тестовой рабочей станции <b>Win11gpo</b> и выполните команду:</p>
+		<pre>gpupdate /force</pre>
+		<p>Перезагрузите рабочую станцию <b>Win11gpo</b>, чтобы применить политику.</p>
+        <h2>Результат:</h2>
+        <p>После перезагрузки проверьте, установлен ли и запущен ли Falcon Sensor.</p>
+		<p><u>Вариант 1</u>: Проверка установленных программ<br>
+		Откройте <b>Панель управления ->Программы и компоненты</b>.<br>
+		Найдите CrowdStrike Falcon Sensor в списке.</p>
+		<img src="images/csgpo/009.png"    alt="Deploy Falcon sensor GPO"  loading="lazy">
+		<p><u>Вариант 2</u>: Проверка служб Windows<br>
+		Выполните следующую команду в командной строке:</p>
+		<pre>sc query csagent</pre>
+		<img src="images/csgpo/010.png"    alt="Deploy Falcon sensor GPO"  loading="lazy">
+
+
+
+        <div>
+            <span class="tag">CrowdStrike</span>
+			<span class="tag">Sensor</span>
+			<span class="tag">Install</span>
+            <span class="tag">PoC</span>
+            <span class="tag">Guide</span>
+        </div>
+    </article>
+
+    <!-- Боковая панель с картой сайта -->
+
+<aside id="sidebar"></aside>
+<script src="sidebar.js"></script>
+
+
+
+</main>
+
+<footer>
+    © 2026 • Cyber Security Blog
+</footer>
+
+</body>
+</html>
