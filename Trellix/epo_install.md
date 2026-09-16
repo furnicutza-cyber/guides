@@ -136,9 +136,9 @@ dir /x
 **TCP порт, используемый для соединения с сервером базы данных** — динамический порт,  значение параметра **TCP Dynamic Ports**  в случае Express Edition. Для коммерческих версий Microsoft SQL Server порт по умолчанию TCP 1433.
 
 <img  alt="11" src="https://github.com/user-attachments/assets/8b940550-53de-4150-807e-9be9259c94b2" />
-<br>
+
 Утилита Pre-Installation Auditor  должна перед запуском провести проверку соответствия, если все проверки успешно пройдены жмем **Finish** и возвращаемся к установке.
-<br>
+
 
 <img  alt="12" src="https://github.com/user-attachments/assets/04f5a2ef-71e5-4598-b2df-3e2aaba5e89c" />
 
@@ -173,7 +173,7 @@ dir /x
 
 <img  alt="19" src="https://github.com/user-attachments/assets/d298c7e5-3030-4794-968c-de0e0d46ff20" />
 
-По окончании установки выбрать **Yes, I want to launch Trellix ePolicy Orchestrator**.. и  нажать **sh**.
+По окончании установки выбрать **Yes, I want to launch Trellix ePolicy Orchestrator**.. и  нажать **Finish**.
 
 <img alt="20" src="https://github.com/user-attachments/assets/5d0fb73c-97a5-4db0-8610-da1fb928839d" />
 
